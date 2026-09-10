@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+# Build output
+dist/
+# Environment files (never commit secrets)
+.env
+.env.development
+.env.local
+.env.production
+.env.*.local
+# Logs
+*.log
+tmp/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store

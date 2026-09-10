@@ -1,0 +1,10 @@
+import { useClients } from "../hooks/useData";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+export default function ClientsPage() {
+  const { clients, loading, addClient, deleteClient } = useClients();
+  const [name, setName] = useState(""); const [email, setEmail] = useState(""); const [phone, setPhone] = useState(""); const [company, setCompany] = useState("");
+  const navigate = useNavigate();
+  const handleAdd = async (e: React.FormEvent) => { e.preventDefault(); if (!name.trim()) return; await addClient({ name, email, phone, company }); setName(""); setEmail(""); setPhone(""); setCompany(""); };
+  return <div style={{ maxWidth: 900, margin: "0 auto", padding: 20 }}><h1>Clienti</h1><form onSubmit={handleAdd} style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}><input placeholder="Nome*" value={name} onChange={e => setName(e.target.value)} required /><input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} /><input placeholder="Telefono" value={phone} onChange={e => setPhone(e.target.value)} /><input placeholder="Azienda" value={company} onChange={e => setCompany(e.target.value)} /><button type="submit">Aggiungi</button></form>{loading && <p>Caricamento...</p>}<table style={{ width: "100%", borderCollapse: "collapse" }}><thead><tr style={{ background: "#eee" }}><th style={{ padding: 8 }}>Nome</th><th style={{ padding: 8 }}>Email</th><th style={{ padding: 8 }}>Telefono</th><th style={{ padding: 8 }}>Azienda</th><th style={{ padding: 8 }}>Azioni</th></tr></thead><tbody>{clients.map((c: any) => <tr key={c.id} style={{ borderBottom: "1px solid #ddd" }}><td style={{ padding: 8 }}>{c.name}</td><td style={{ padding: 8 }}>{c.email}</td><td style={{ padding: 8 }}>{c.phone}</td><td style={{ padding: 8 }}>{c.company}</td><td style={{ padding: 8 }}><button onClick={() => navigate(`/tasks?client=${c.id}`)} style={{ marginRight: 4 }}>Task</button><button onClick={() => deleteClient(c.id)}>Elimina</button></td></tr>)}</tbody></table></div>;
+}

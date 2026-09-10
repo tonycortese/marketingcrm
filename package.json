@@ -1,0 +1,13 @@
+{
+  "name": "marketingcrm",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["src/backend", "src/frontend"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w src/backend\" \"npm run dev -w src/frontend\"",
+    "build": "npm run build -w src/frontend && npm run build -w src/backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
