@@ -1,0 +1,63 @@
+import { query } from "./db.js";
+
+export const contactModel = {
+  async findMany(where?: Record<string, any>) {
+    let sql = `SELECT contacts.*, companies.name AS company_name 
+               FROM contacts 
+               LEFT JOIN companies ON contacts.company_id = companies.id`;
+    const params: any[] = [];
+    if (where && Object.keys(where).length) {
+      const clauses = Object.keys(where).map((k) => `${k} = ?`);
+      sql += ` WHERE ${clauses.join(" AND ")}`;
+      params.push(...Object.values(where));
+    }
+    sql += " ORDER BY contacts.name ASC";
+    return query(sql, params);
+  },
+
+  async findByCompany(companyId: number) {
+    return query(
+      "SELECT * FROM contacts WHERE company_id = ? ORDER BY name ASC",
+      [companyId]
+    );
+  },
+
+  async findUnique(id: number) {
+    const rows = await query(
+      `SELECT contacts.*, companies.name AS company_name 
+       FROM contacts 
+       LEFT JOIN companies ON contacts.company_id = companies.id 
+       WHERE contacts.id = ?`,
+      [id]
+    );
+    return (rows as any[])[0] ?? null;
+  },
+
+  async create(data: Record<string, any>) {
+    const { name, phone, email, company_id } = data;
+    const result = await query(
+      `INSERT INTO contacts (name, phone, email, company_id) VALUES (?, ?, ?, ?)`,
+      [name, phone || null, email || null, company_id || null]
+    );
+    return { insertId: (result as any).insertId ?? 0 };
+  },
+
+  async update(id: number, data: Record<string, any>) {
+    const { created_at, updated_at, id: _id, company_name, ...cleanData } = data;
+    const sets: string[] = [];
+    const params: any[] = [];
+    for (const [k, v] of Object.entries(cleanData)) {
+      if (v !== undefined) {
+        sets.push(`${k} = ?`);
+        params.push(v);
+      }
+    }
+    if (!sets.length) return;
+    params.push(id);
+    await query(`UPDATE contacts SET ${sets.join(", ")} WHERE id = ?`, params);
+  },
+
+  async delete(id: number) {
+    await query("DELETE FROM contacts WHERE id = ?", [id]);
+  },
+};
