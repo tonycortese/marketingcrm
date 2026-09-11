@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { useTasks, useCompanies } from "../hooks/useData";
+import { useRealtimeRefresh } from "../lib/socket-context";
 import { CheckCircle2, Circle, Clock, Calendar, Trash2, Plus, X } from "lucide-react";
 
 export default function TasksPage() {
-  const { tasks, loading, addTask, updateTask, deleteTask } = useTasks();
+  const { tasks, loading, addTask, updateTask, deleteTask, refresh: refreshTasks } = useTasks();
   const { companies } = useCompanies();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", due_date: "", status: "pending", company_id: null as number | null });
+
+  // Realtime refresh
+  useRealtimeRefresh("task:created", refreshTasks);
+  useRealtimeRefresh("task:updated", refreshTasks);
+  useRealtimeRefresh("task:deleted", refreshTasks);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();

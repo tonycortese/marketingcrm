@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { io, Socket } from "socket.io-client";
 import { useCompanies, useActivities, useTasks } from "../hooks/useData";
+import { useRealtimeRefresh } from "../lib/socket-context";
 import { Plus, Building, Zap, CheckCircle2, Circle, Clock, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import CompanyFunnel from "../components/CompanyFunnel";
@@ -11,19 +11,19 @@ export default function DashboardPage() {
   const { refresh: refreshActivities } = useActivities();
   const { tasks, updateTask, refresh: refreshTasks } = useTasks();
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<string[]>([]);
   const [funnelOpen, setFunnelOpen] = useState(false);
   const [activityFunnelOpen, setActivityFunnelOpen] = useState(false);
 
-  useEffect(() => {
-    const s = io(import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000");
-    s.on("connect", () => console.log("[WS] connesso"));
-    s.on("task:added", (d: any) =>
-      setNotifications((n) => [`Task aggiunto: ${d.title}`, ...n.slice(0, 9)])
-    );
-    s.on("disconnect", () => console.log("[WS] disconnesso"));
-    return () => { s.disconnect(); };
-  }, []);
+  // Realtime refresh
+  useRealtimeRefresh("company:created", refreshCompanies);
+  useRealtimeRefresh("company:updated", refreshCompanies);
+  useRealtimeRefresh("company:deleted", refreshCompanies);
+  useRealtimeRefresh("task:created", refreshTasks);
+  useRealtimeRefresh("task:updated", refreshTasks);
+  useRealtimeRefresh("task:deleted", refreshTasks);
+  useRealtimeRefresh("activity:created", refreshActivities);
+  useRealtimeRefresh("activity:updated", refreshActivities);
+  useRealtimeRefresh("activity:deleted", refreshActivities);
 
   const openTasks = useMemo(() => tasks.filter((t: any) => t.status !== "completed"), [tasks]);
   const todayStr = new Date().toISOString().split('T')[0];
@@ -37,7 +37,6 @@ export default function DashboardPage() {
   const handleToggleTask = async (task: any) => {
     const nextStatus = task.status === "completed" ? "pending" : "completed";
     await updateTask(task.id, { status: nextStatus });
-    refreshTasks();
   };
 
   return (

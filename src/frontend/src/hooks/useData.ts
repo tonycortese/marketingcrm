@@ -1,23 +1,26 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../lib/api";
-export function useClients() {
-  const [clients, setClients] = useState<any[]>([]); const [loading, setLoading] = useState(true);
-  const fetchClients = useCallback(async () => { try { const { data } = await api.get("/clients"); setClients(data); } catch (err) { console.error(err); } finally { setLoading(false); } }, []);
-  useEffect(() => { fetchClients(); }, [fetchClients]);
-  const addClient = async (client: any) => { await api.post("/clients", client); await fetchClients(); };
-  const updateClient = async (id: number, data: any) => { await api.patch(`/clients/${id}`, data); await fetchClients(); };
-  const deleteClient = async (id: number) => { await api.delete(`/clients/${id}`); await fetchClients(); };
-  return { clients, loading, addClient, updateClient, deleteClient, refresh: fetchClients };
-}
+
 export function useTasks() {
-  const [tasks, setTasks] = useState<any[]>([]); const [loading, setLoading] = useState(true);
-  const fetchTasks = useCallback(async () => { try { const { data } = await api.get("/tasks"); setTasks(data); } catch (err) { console.error(err); } finally { setLoading(false); } }, []);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const fetchTasks = useCallback(async () => {
+    try {
+      const { data } = await api.get("/tasks");
+      setTasks(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
-  const addTask = async (task: any) => { await api.post("/tasks", task); await fetchTasks(); };
-  const updateTask = async (id: number, data: any) => { await api.patch(`/tasks/${id}`, data); await fetchTasks(); };
-  const deleteTask = async (id: number) => { await api.delete(`/tasks/${id}`); await fetchTasks(); };
+  const addTask = async (task: any) => { await api.post("/tasks", task); };
+  const updateTask = async (id: number, data: any) => { await api.patch(`/tasks/${id}`, data); };
+  const deleteTask = async (id: number) => { await api.delete(`/tasks/${id}`); };
   return { tasks, loading, addTask, updateTask, deleteTask, refresh: fetchTasks };
 }
+
 export function useCompanies() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,21 +34,10 @@ export function useCompanies() {
       setLoading(false);
     }
   }, []);
-  useEffect(() => {
-    fetchCompanies();
-  }, [fetchCompanies]);
-  const addCompany = async (company: any) => {
-    await api.post("/companies", company);
-    await fetchCompanies();
-  };
-  const updateCompany = async (id: number, data: any) => {
-    await api.patch(`/companies/${id}`, data);
-    await fetchCompanies();
-  };
-  const deleteCompany = async (id: number) => {
-    await api.delete(`/companies/${id}`);
-    await fetchCompanies();
-  };
+  useEffect(() => { fetchCompanies(); }, [fetchCompanies]);
+  const addCompany = async (company: any) => { await api.post("/companies", company); };
+  const updateCompany = async (id: number, data: any) => { await api.patch(`/companies/${id}`, data); };
+  const deleteCompany = async (id: number) => { await api.delete(`/companies/${id}`); };
   return { companies, loading, addCompany, updateCompany, deleteCompany, refresh: fetchCompanies };
 }
 
@@ -62,21 +54,10 @@ export function useContacts() {
       setLoading(false);
     }
   }, []);
-  useEffect(() => {
-    fetchContacts();
-  }, [fetchContacts]);
-  const addContact = async (contact: any) => {
-    await api.post("/contacts", contact);
-    await fetchContacts();
-  };
-  const updateContact = async (id: number, data: any) => {
-    await api.patch(`/contacts/${id}`, data);
-    await fetchContacts();
-  };
-  const deleteContact = async (id: number) => {
-    await api.delete(`/contacts/${id}`);
-    await fetchContacts();
-  };
+  useEffect(() => { fetchContacts(); }, [fetchContacts]);
+  const addContact = async (contact: any) => { await api.post("/contacts", contact); };
+  const updateContact = async (id: number, data: any) => { await api.patch(`/contacts/${id}`, data); };
+  const deleteContact = async (id: number) => { await api.delete(`/contacts/${id}`); };
   return { contacts, loading, addContact, updateContact, deleteContact, refresh: fetchContacts };
 }
 
@@ -93,21 +74,10 @@ export function useActivities() {
       setLoading(false);
     }
   }, []);
-  useEffect(() => {
-    fetchActivities();
-  }, [fetchActivities]);
-  const addActivity = async (activity: any) => {
-    await api.post("/activities", activity);
-    await fetchActivities();
-  };
-  const updateActivity = async (id: number, data: any) => {
-    await api.patch(`/activities/${id}`, data);
-    await fetchActivities();
-  };
-  const deleteActivity = async (id: number) => {
-    await api.delete(`/activities/${id}`);
-    await fetchActivities();
-  };
+  useEffect(() => { fetchActivities(); }, [fetchActivities]);
+  const addActivity = async (activity: any) => { await api.post("/activities", activity); };
+  const updateActivity = async (id: number, data: any) => { await api.patch(`/activities/${id}`, data); };
+  const deleteActivity = async (id: number) => { await api.delete(`/activities/${id}`); };
   return { activities, loading, addActivity, updateActivity, deleteActivity, refresh: fetchActivities };
 }
 
@@ -121,8 +91,6 @@ export function useDashboard() {
       console.error(err);
     }
   }, []);
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+  useEffect(() => { fetchStats(); }, [fetchStats]);
   return { stats, refresh: fetchStats };
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useActivities, useCompanies } from "../hooks/useData";
+import { useRealtimeRefresh } from "../lib/socket-context";
 import { Zap, Phone, Mail, Users, FileText, Calendar, Trash2, Pencil, X } from "lucide-react";
 
 const ACTIVITY_TYPES = [
@@ -10,9 +11,14 @@ const ACTIVITY_TYPES = [
 ];
 
 export default function ActivitiesPage() {
-  const { activities, loading, deleteActivity, updateActivity } = useActivities();
+  const { activities, loading, deleteActivity, updateActivity, refresh: refreshActivities } = useActivities();
   const { companies } = useCompanies();
   const [editingActivity, setEditingActivity] = useState<any>(null);
+
+  // Realtime refresh
+  useRealtimeRefresh("activity:created", refreshActivities);
+  useRealtimeRefresh("activity:updated", refreshActivities);
+  useRealtimeRefresh("activity:deleted", refreshActivities);
 
   const handleUpdateActivity = async (e: React.FormEvent) => {
     e.preventDefault();

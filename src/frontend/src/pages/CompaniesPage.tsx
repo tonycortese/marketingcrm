@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useCompanies, useTasks, useContacts } from "../hooks/useData";
+import { useRealtimeRefresh } from "../lib/socket-context";
 import { Building, Plus, Trash2, Phone, Mail, MapPin, User, X, Pencil, Calendar, CheckCircle2, Circle, Clock, Search, Zap } from "lucide-react";
 
 const COMPANY_TYPES = ["Tecnologia", "Consulenza", "Commercio", "Servizi", "Industria", "Altro"];
@@ -15,9 +16,9 @@ const COMPANY_STATUSES = [
 const STATUS_COLORS: Record<string, string> = Object.fromEntries(COMPANY_STATUSES.map(s => [s.value, s.color]));
 
 export default function CompaniesPage() {
-  const { companies, loading, deleteCompany, updateCompany } = useCompanies();
-  const { tasks, addTask, updateTask, deleteTask } = useTasks();
-  const { contacts, addContact, deleteContact } = useContacts();
+  const { companies, loading, deleteCompany, updateCompany, refresh: refreshCompanies } = useCompanies();
+  const { tasks, addTask, updateTask, deleteTask, refresh: refreshTasks } = useTasks();
+  const { contacts, addContact, deleteContact, refresh: refreshContacts } = useContacts();
   const [contactForm, setContactForm] = useState({ name: "", phone: "", email: "" });
   const [showAddContact, setShowAddContact] = useState(false);
   const [contactCompanyId, setContactCompanyId] = useState<number | null>(null);
@@ -27,6 +28,17 @@ export default function CompaniesPage() {
   const [showAddTask, setShowAddTask] = useState(false);
   const [taskForm, setTaskForm] = useState({ title: "", description: "", due_date: "", status: "pending" });
   const [taskCompanyId, setTaskCompanyId] = useState<number | null>(null);
+
+  // Realtime refresh
+  useRealtimeRefresh("company:created", refreshCompanies);
+  useRealtimeRefresh("company:updated", refreshCompanies);
+  useRealtimeRefresh("company:deleted", refreshCompanies);
+  useRealtimeRefresh("task:created", refreshTasks);
+  useRealtimeRefresh("task:updated", refreshTasks);
+  useRealtimeRefresh("task:deleted", refreshTasks);
+  useRealtimeRefresh("contact:created", refreshContacts);
+  useRealtimeRefresh("contact:updated", refreshContacts);
+  useRealtimeRefresh("contact:deleted", refreshContacts);
 
   const getCompanyContacts = (companyId: number) => contacts.filter((c: any) => c.company_id === companyId);
   const getCompanyTasks = (companyId: number) => tasks.filter((t: any) => t.company_id === companyId);

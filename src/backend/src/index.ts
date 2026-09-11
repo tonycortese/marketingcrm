@@ -16,7 +16,6 @@ app.use(cors({ origin: FRONTEND_URL, methods: ["GET", "POST", "PATCH", "DELETE"]
 app.use(express.json());
 const httpServer = createServer(app);
 const io = new IOServer(httpServer, { cors: { origin: FRONTEND_URL, methods: ["GET", "POST"] } });
-app.get("/health", (_req, res) => res.json({ status: "ok", ts: Date.now() }));
 mountCrmRoutes(app, io); io.on("connection", handleConnection);
 const PORT = parseInt(process.env.PORT ?? "3000");
 async function main() { await initDb(); httpServer.listen(PORT, () => { console.log(`[Server] CRM backend su porta ${PORT}`); }); }
