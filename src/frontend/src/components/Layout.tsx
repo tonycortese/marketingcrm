@@ -16,11 +16,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { logout, user } = useAuth();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
+  const [avatarOpen, setAvatarOpen] = React.useState(false);
+
   const handleLogout = async () => {
     try {
       await logout();
     } catch { /* ignore */ }
     setMobileOpen(false);
+    setAvatarOpen(false);
     navigate('/login', { replace: true });
   };
 
@@ -76,29 +79,44 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
         {user && (
           <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{
-                width: '32px', height: '32px', borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <User size={16} color="var(--text-secondary)" />
-              </div>
-              <div style={{ overflow: 'hidden' }}>
-                <div style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
-              </div>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setAvatarOpen((v) => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem',
+                  background: 'transparent', border: 'none', cursor: 'pointer', padding: '0', width: '100%', textAlign: 'left',
+                }}
+              >
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '0.5rem',
+                  backgroundColor: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <User size={16} color="var(--text-secondary)" />
+                </div>
+                <div style={{ overflow: 'hidden', flex: 1 }}>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+                </div>
+              </button>
+              {avatarOpen && (
+                <div style={{
+                  position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: '0.5rem',
+                  backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '0.5rem',
+                  boxShadow: '0 -4px 12px rgba(0,0,0,0.3)', overflow: 'hidden', zIndex: 100,
+                }}>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.625rem 0.75rem', backgroundColor: 'transparent', color: 'var(--danger)',
+                      border: 'none', cursor: 'pointer', fontSize: '0.8125rem', textAlign: 'left',
+                    }}
+                  >
+                    <LogOut size={14} /> Esci
+                  </button>
+                </div>
+              )}
             </div>
-            <button
-              onClick={handleLogout}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                padding: '0.5rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.8125rem',
-                backgroundColor: 'transparent', color: 'var(--danger)', cursor: 'pointer',
-                border: '1px solid var(--danger)', minHeight: '44px',
-              }}
-            >
-              <LogOut size={14} /> Esci
-            </button>
           </div>
         )}
       </nav>
@@ -130,13 +148,40 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1.1rem' }}>CRM</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{
-            width: '32px', height: '32px', borderRadius: '50%',
-            backgroundColor: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
+          <button
+            onClick={() => setAvatarOpen((v) => !v)}
+            style={{
+              all: 'unset',
+              width: '32px', height: '32px', borderRadius: '50%',
+              backgroundColor: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', overflow: 'hidden',
+            }}
+          >
             <User size={14} color="var(--text-secondary)" />
-          </div>
+          </button>
         </div>
+        {avatarOpen && user && (
+          <div style={{
+            position: 'absolute', top: '100%', right: '1rem', marginTop: '0.5rem',
+            minWidth: '200px', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border)',
+            borderRadius: '0.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', zIndex: 100, overflow: 'hidden',
+          }}>
+            <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{user.name}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user.email}</div>
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.625rem 1rem', backgroundColor: 'transparent', color: 'var(--danger)',
+                border: 'none', cursor: 'pointer', fontSize: '0.875rem',
+              }}
+            >
+              <LogOut size={14} /> Esci
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Mobile drawer overlay */}
@@ -212,29 +257,44 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
         {user && (
           <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{
-                width: '32px', height: '32px', borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <User size={16} color="var(--text-secondary)" />
-              </div>
-              <div style={{ overflow: 'hidden' }}>
-                <div style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
-              </div>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setAvatarOpen((v) => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem',
+                  background: 'transparent', border: 'none', cursor: 'pointer', padding: '0', width: '100%', textAlign: 'left',
+                }}
+              >
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '0.5rem',
+                  backgroundColor: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <User size={16} color="var(--text-secondary)" />
+                </div>
+                <div style={{ overflow: 'hidden', flex: 1 }}>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+                </div>
+              </button>
+              {avatarOpen && (
+                <div style={{
+                  position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: '0.5rem',
+                  backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '0.5rem',
+                  boxShadow: '0 -4px 12px rgba(0,0,0,0.3)', overflow: 'hidden', zIndex: 100,
+                }}>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.625rem 0.75rem', backgroundColor: 'transparent', color: 'var(--danger)',
+                      border: 'none', cursor: 'pointer', fontSize: '0.8125rem', textAlign: 'left',
+                    }}
+                  >
+                    <LogOut size={14} /> Esci
+                  </button>
+                </div>
+              )}
             </div>
-            <button
-              onClick={handleLogout}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                padding: '0.625rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.875rem',
-                backgroundColor: 'transparent', color: 'var(--danger)', cursor: 'pointer',
-                border: '1px solid var(--danger)', minHeight: '44px',
-              }}
-            >
-              <LogOut size={14} /> Esci
-            </button>
           </div>
         )}
       </nav>
