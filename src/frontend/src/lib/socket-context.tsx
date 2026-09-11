@@ -17,8 +17,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const url = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
-    const s = io(url, { transports: ["websocket", "polling"] });
+    // Empty string = same origin (works with Vite proxy)
+    const s = io({
+      path: "/socket.io",
+      transports: ["websocket", "polling"],
+    });
     socketRef.current = s;
 
     s.on("connect", () => {
