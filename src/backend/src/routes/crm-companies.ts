@@ -1,8 +1,27 @@
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.js";
+import { validate } from "../middleware/validate.js";
 import { companyModel } from "../lib/company-model.js";
 import { contactModel } from "../lib/contact-model.js";
 
 const router = Router();
+router.use(requireAuth);
+
+const companySchema = {
+  name: { type: "string" as const, required: true, maxLength: 255 },
+  city: { type: "string" as const, maxLength: 255 },
+  address: { type: "string" as const, maxLength: 255 },
+  phone: { type: "string" as const, maxLength: 50 },
+  type: { type: "string" as const, maxLength: 100 },
+  status: { type: "enum" as const, values: ["sconosciuto","conosciuto","potenziale","cliente","inattivo","perso","non_interessato"] },
+};
+
+const contactSchema = {
+  name: { type: "string" as const, required: true, maxLength: 255 },
+  phone: { type: "string" as const, maxLength: 50 },
+  email: { type: "email" as const },
+  company_id: { type: "number" as const },
+};
 
 // Companies
 router.get("/companies", async (_req, res) => {
@@ -13,10 +32,9 @@ router.get("/companies", async (_req, res) => {
   }
 });
 
-router.post("/companies", async (req, res) => {
+router.post("/companies", validate(companySchema), async (req, res) => {
   try {
     const { name, city, address, phone, type } = req.body;
-    if (!name) return res.status(400).json({ error: "name is required" });
     const result = await companyModel.create({ name, city, address, phone, type });
     const company = await companyModel.findUnique(result.insertId);
     res.status(201).json(company);
@@ -64,10 +82,9 @@ router.get("/contacts", async (_req, res) => {
   }
 });
 
-router.post("/contacts", async (req, res) => {
+router.post("/contacts", validate(contactSchema), async (req, res) => {
   try {
     const { name, phone, email, company_id } = req.body;
-    if (!name) return res.status(400).json({ error: "name is required" });
     const result = await contactModel.create({ name, phone, email, company_id });
     const contact = await contactModel.findUnique(result.insertId);
     res.status(201).json(contact);

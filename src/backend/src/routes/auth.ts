@@ -1,16 +1,25 @@
 import { Router, Request, Response } from "express";
 import { userModel } from "../lib/user-model.js";
 import { randomUUID } from "crypto";
+import { validate } from "../middleware/validate.js";
 
 const router = Router();
 
+const registerSchema = {
+  name: { type: "string" as const, required: true, maxLength: 255 },
+  email: { type: "email" as const, required: true },
+  password: { type: "string" as const, required: true, maxLength: 255 },
+};
+
+const loginSchema = {
+  email: { type: "email" as const, required: true },
+  password: { type: "string" as const, required: true, maxLength: 255 },
+};
+
 // POST /api/auth/register
-router.post("/register", async (req: Request, res: Response) => {
+router.post("/register", validate(registerSchema), async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: "Nome, email e password sono richiesti" });
-    }
     if (password.length < 6) {
       return res.status(400).json({ error: "La password deve avere almeno 6 caratteri" });
     }
@@ -28,12 +37,9 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 
 // POST /api/auth/login
-router.post("/login", async (req: Request, res: Response) => {
+router.post("/login", validate(loginSchema), async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email e password sono richiesti" });
-    }
     const user = await userModel.verifyLogin(email, password);
     if (!user) {
       return res.status(401).json({ error: "Credenziali non valide" });

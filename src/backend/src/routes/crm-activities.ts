@@ -1,7 +1,19 @@
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.js";
+import { validate } from "../middleware/validate.js";
 import { activityModel } from "../lib/activity-model.js";
 
 const router = Router();
+router.use(requireAuth);
+
+const activitySchema = {
+  title: { type: "string" as const, required: true, maxLength: 255 },
+  description: { type: "string" as const, maxLength: 2000 },
+  date: { type: "date" as const },
+  type: { type: "enum" as const, values: ["chiamata","email","meeting","nota"] },
+  company_id: { type: "number" as const },
+  task_id: { type: "number" as const },
+};
 
 router.get("/activities", async (_req, res) => {
   try {
@@ -11,10 +23,9 @@ router.get("/activities", async (_req, res) => {
   }
 });
 
-router.post("/activities", async (req, res) => {
+router.post("/activities", validate(activitySchema), async (req, res) => {
   try {
     const { title, description, date, type, company_id } = req.body;
-    if (!title) return res.status(400).json({ error: "title is required" });
     const result = await activityModel.create({ title, description, date, type, company_id });
     const activity = await activityModel.findUnique(result.insertId);
     res.status(201).json(activity);

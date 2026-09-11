@@ -1,7 +1,18 @@
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.js";
+import { validate } from "../middleware/validate.js";
 import { taskModel } from "../lib/task-model.js";
 
 const router = Router();
+router.use(requireAuth);
+
+const taskSchema = {
+  title: { type: "string" as const, required: true, maxLength: 255 },
+  description: { type: "string" as const, maxLength: 2000 },
+  due_date: { type: "date" as const },
+  status: { type: "enum" as const, values: ["pending","in_progress","completed"] },
+  company_id: { type: "number" as const },
+};
 
 router.get("/tasks", async (_req, res) => {
   try {
@@ -11,10 +22,9 @@ router.get("/tasks", async (_req, res) => {
   }
 });
 
-router.post("/tasks", async (req, res) => {
+router.post("/tasks", validate(taskSchema), async (req, res) => {
   try {
     const { title, description, due_date, status, company_id } = req.body;
-    if (!title) return res.status(400).json({ error: "title is required" });
     const result = await taskModel.create({ title, description, due_date, status, company_id });
     const task = await taskModel.findUnique(result.insertId);
     res.status(201).json(task);
