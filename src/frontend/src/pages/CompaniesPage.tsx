@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCompanies, useTasks, useContacts } from "../hooks/useData";
 import { useRealtimeRefresh } from "../lib/socket-context";
-import { Building, Plus, Trash2, Phone, Mail, MapPin, User, X, Pencil, Calendar, CheckCircle2, Circle, Clock, Search, Zap } from "lucide-react";
+import { Building, Plus, Trash2, User, Search, ChevronRight } from "lucide-react";
 
 const COMPANY_TYPES = ["Tecnologia", "Consulenza", "Commercio", "Servizi", "Industria", "Altro"];
 const COMPANY_STATUSES = [
@@ -16,14 +17,13 @@ const COMPANY_STATUSES = [
 const STATUS_COLORS: Record<string, string> = Object.fromEntries(COMPANY_STATUSES.map(s => [s.value, s.color]));
 
 export default function CompaniesPage() {
-  const { companies, loading, deleteCompany, updateCompany, refresh: refreshCompanies } = useCompanies();
-  const { tasks, addTask, updateTask, deleteTask, refresh: refreshTasks } = useTasks();
-  const { contacts, addContact, deleteContact, refresh: refreshContacts } = useContacts();
+  const navigate = useNavigate();
+  const { companies, loading, deleteCompany, refresh: refreshCompanies } = useCompanies();
+  const { addTask, refresh: refreshTasks } = useTasks();
+  const { addContact, refresh: refreshContacts } = useContacts();
   const [contactForm, setContactForm] = useState({ name: "", phone: "", email: "" });
   const [showAddContact, setShowAddContact] = useState(false);
   const [contactCompanyId, setContactCompanyId] = useState<number | null>(null);
-  const [expandedCompany, setExpandedCompany] = useState<number | null>(null);
-  const [editingCompany, setEditingCompany] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddTask, setShowAddTask] = useState(false);
   const [taskForm, setTaskForm] = useState({ title: "", description: "", due_date: "", status: "pending" });
@@ -34,14 +34,7 @@ export default function CompaniesPage() {
   useRealtimeRefresh("company:updated", refreshCompanies);
   useRealtimeRefresh("company:deleted", refreshCompanies);
   useRealtimeRefresh("task:created", refreshTasks);
-  useRealtimeRefresh("task:updated", refreshTasks);
-  useRealtimeRefresh("task:deleted", refreshTasks);
   useRealtimeRefresh("contact:created", refreshContacts);
-  useRealtimeRefresh("contact:updated", refreshContacts);
-  useRealtimeRefresh("contact:deleted", refreshContacts);
-
-  const getCompanyContacts = (companyId: number) => contacts.filter((c: any) => c.company_id === companyId);
-  const getCompanyTasks = (companyId: number) => tasks.filter((t: any) => t.company_id === companyId);
 
   const filteredCompanies = useMemo(() => {
     if (!searchQuery) return companies;
@@ -50,10 +43,9 @@ export default function CompaniesPage() {
       c.name?.toLowerCase().includes(q) ||
       c.city?.toLowerCase().includes(q) ||
       c.type?.toLowerCase().includes(q) ||
-      c.status?.toLowerCase().includes(q) ||
-      getCompanyContacts(c.id).some(ct => ct.name?.toLowerCase().includes(q))
+      c.status?.toLowerCase().includes(q)
     );
-  }, [companies, searchQuery, contacts]);
+  }, [companies, searchQuery]);
 
   const handleAddContact = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,17 +63,6 @@ export default function CompaniesPage() {
     setShowAddTask(false);
   };
 
-  const handleToggleTask = async (task: any) => {
-    await updateTask(task.id, { status: task.status === "completed" ? "pending" : "completed" });
-  };
-
-  const handleUpdateCompany = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingCompany) return;
-    await updateCompany(editingCompany.id, editingCompany);
-    setEditingCompany(null);
-  };
-
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "1rem" }}>
       <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "1.25rem" }}>Aziende</h1>
@@ -89,7 +70,7 @@ export default function CompaniesPage() {
       {/* Search */}
       <div style={{ position: "relative", marginBottom: "1.25rem" }}>
         <input
-          placeholder="Cerca per nome, città, tipologia o referente..."
+          placeholder="Cerca per nome, città, tipologia o stato..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
@@ -104,111 +85,57 @@ export default function CompaniesPage() {
       {loading && <p style={{ color: "var(--text-secondary)", padding: "1rem" }}>Caricamento...</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        {filteredCompanies.map((company: any) => {
-          const isExpanded = expandedCompany === company.id;
-          const companyTasks = getCompanyTasks(company.id);
-          const companyContacts = getCompanyContacts(company.id);
-
-          return (
-            <div key={company.id} style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "1rem", overflow: "hidden" }}>
-              <div
-                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem", cursor: "pointer", gap: "0.75rem" }}
-                onClick={() => setExpandedCompany(isExpanded ? null : company.id)}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, overflow: "hidden" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: "0.625rem", backgroundColor: "rgba(59,130,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#3b82f6", flexShrink: 0 }}>
-                    <Building size={20} />
-                  </div>
-                  <div style={{ overflow: "hidden" }}>
-                    <div style={{ fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{company.name}</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                      {company.city && <span>{company.city}</span>}
-                      {companyContacts.length > 0 && <span>{companyContacts.length} ref.</span>}
-                      {companyTasks.length > 0 && <span>{companyTasks.length} task</span>}
-                      <span style={{ padding: "0.125rem 0.375rem", borderRadius: "0.25rem", fontSize: "0.625rem", fontWeight: 600, backgroundColor: `${STATUS_COLORS[company.status]}20`, color: STATUS_COLORS[company.status] }}>
-                        {COMPANY_STATUSES.find(s => s.value === company.status)?.label}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: "0.375rem", flexShrink: 0 }}>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setContactCompanyId(company.id); setShowAddContact(true); }}
-                    style={{ padding: "0.5rem", backgroundColor: "var(--success)", color: "#fff", borderRadius: "0.5rem", border: "none", cursor: "pointer", display: "flex", minWidth: "40px", minHeight: "40px", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <User size={16} />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setTaskCompanyId(company.id); setShowAddTask(true); }}
-                    style={{ padding: "0.5rem", backgroundColor: "var(--accent-primary)", color: "#fff", borderRadius: "0.5rem", border: "none", cursor: "pointer", display: "flex", minWidth: "40px", minHeight: "40px", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <Plus size={16} />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); if (confirm(`Eliminare?`)) deleteCompany(company.id); }}
-                    style={{ padding: "0.5rem", backgroundColor: "transparent", color: "var(--danger)", borderRadius: "0.5rem", border: "1px solid var(--danger)", cursor: "pointer", display: "flex", minWidth: "40px", minHeight: "40px", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {isExpanded && (
-                <div style={{ borderTop: "1px solid var(--border)", padding: "1rem" }}>
-                  {/* Actions row */}
-                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-                    <button onClick={() => setEditingCompany({ ...company })} style={{ padding: "0.375rem 0.75rem", backgroundColor: "var(--bg-tertiary)", color: "var(--text-secondary)", borderRadius: "0.375rem", border: "1px solid var(--border)", cursor: "pointer", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                      <Pencil size={12} /> Modifica
-                    </button>
-                  </div>
-
-                  {/* Tasks */}
-                  <div style={{ marginBottom: "1rem" }}>
-                    <h4 style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                      <CheckCircle2 size={14} style={{ color: "var(--accent-primary)" }} /> Task ({companyTasks.length})
-                    </h4>
-                    {companyTasks.length === 0 && <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontStyle: "italic" }}>Nessun task</p>}
-                    {companyTasks.map((task: any) => (
-                      <div key={task.id} style={{ display: "flex", alignItems: "center", gap: "0.625rem", padding: "0.375rem 0" }}>
-                        <button onClick={() => handleToggleTask(task)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                          {task.status === "completed" ? <CheckCircle2 size={16} color="#10b981" /> : task.status === "in_progress" ? <Clock size={16} color="#f59e0b" /> : <Circle size={16} color="#6b7280" />}
-                        </button>
-                        <div style={{ flex: 1, overflow: "hidden" }}>
-                          <div style={{ fontSize: "0.8125rem", color: task.status === "completed" ? "var(--text-secondary)" : "var(--text-primary)", textDecoration: task.status === "completed" ? "line-through" : "none" }}>{task.title}</div>
-                          {task.due_date && <div style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>{task.due_date.split('T')[0]}</div>}
-                        </div>
-                        <button onClick={() => deleteTask(task.id)} style={{ padding: "0.25rem", background: "none", border: "none", color: "var(--danger)", cursor: "pointer" }}><Trash2 size={14} /></button>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Contacts */}
-                  <div>
-                    <h4 style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                      <User size={14} style={{ color: "var(--success)" }} /> Referenti ({companyContacts.length})
-                    </h4>
-                    {companyContacts.length === 0 && <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontStyle: "italic" }}>Nessun referente</p>}
-                    {companyContacts.map((contact: any) => (
-                      <div key={contact.id} style={{ display: "flex", alignItems: "center", gap: "0.625rem", padding: "0.375rem 0" }}>
-                        <div style={{ width: 28, height: 28, borderRadius: "50%", backgroundColor: "var(--bg-tertiary)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", flexShrink: 0 }}>
-                          <User size={12} />
-                        </div>
-                        <div style={{ flex: 1, overflow: "hidden" }}>
-                          <div style={{ fontSize: "0.8125rem", fontWeight: 500, color: "var(--text-primary)" }}>{contact.name}</div>
-                          <div style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                            {contact.phone && <span>{contact.phone}</span>}
-                            {contact.email && <span>{contact.email}</span>}
-                          </div>
-                        </div>
-                        <button onClick={() => deleteContact(contact.id)} style={{ padding: "0.25rem", background: "none", border: "none", color: "var(--danger)", cursor: "pointer" }}><Trash2 size={14} /></button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+        {filteredCompanies.map((company: any) => (
+          <div
+            key={company.id}
+            onClick={() => navigate(`/companies/${company.id}`)}
+            style={{
+              backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "1rem",
+              padding: "1rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.75rem",
+              transition: "border-color 0.15s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent-primary)")}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+          >
+            <div style={{ width: 40, height: 40, borderRadius: "0.625rem", backgroundColor: "rgba(59,130,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#3b82f6", flexShrink: 0 }}>
+              <Building size={20} />
             </div>
-          );
-        })}
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              <div style={{ fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{company.name}</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                {company.city && <span>{company.city}</span>}
+                {company.type && <span>• {company.type}</span>}
+                <span style={{ padding: "0.125rem 0.375rem", borderRadius: "0.25rem", fontSize: "0.625rem", fontWeight: 600, backgroundColor: `${STATUS_COLORS[company.status]}20`, color: STATUS_COLORS[company.status] }}>
+                  {COMPANY_STATUSES.find(s => s.value === company.status)?.label}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "0.375rem", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => { setContactCompanyId(company.id); setShowAddContact(true); }}
+                title="Aggiungi referente"
+                style={{ padding: "0.5rem", backgroundColor: "var(--success)", color: "#fff", borderRadius: "0.5rem", border: "none", cursor: "pointer", display: "flex", minWidth: "40px", minHeight: "40px", alignItems: "center", justifyContent: "center" }}
+              >
+                <User size={16} />
+              </button>
+              <button
+                onClick={() => { setTaskCompanyId(company.id); setShowAddTask(true); }}
+                title="Aggiungi task"
+                style={{ padding: "0.5rem", backgroundColor: "var(--accent-primary)", color: "#fff", borderRadius: "0.5rem", border: "none", cursor: "pointer", display: "flex", minWidth: "40px", minHeight: "40px", alignItems: "center", justifyContent: "center" }}
+              >
+                <Plus size={16} />
+              </button>
+              <button
+                onClick={() => { if (confirm(`Eliminare ${company.name}?`)) deleteCompany(company.id); }}
+                title="Elimina"
+                style={{ padding: "0.5rem", backgroundColor: "transparent", color: "var(--danger)", borderRadius: "0.5rem", border: "1px solid var(--danger)", cursor: "pointer", display: "flex", minWidth: "40px", minHeight: "40px", alignItems: "center", justifyContent: "center" }}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+            <ChevronRight size={18} style={{ color: "var(--text-secondary)", flexShrink: 0 }} />
+          </div>
+        ))}
       </div>
 
       {filteredCompanies.length === 0 && !loading && (
@@ -218,7 +145,7 @@ export default function CompaniesPage() {
         </div>
       )}
 
-      {/* Modals */}
+      {/* Add Contact Modal */}
       {showAddContact && (
         <Modal title="Nuovo Referente" onClose={() => setShowAddContact(false)}>
           <form onSubmit={handleAddContact} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -230,6 +157,7 @@ export default function CompaniesPage() {
         </Modal>
       )}
 
+      {/* Add Task Modal */}
       {showAddTask && (
         <Modal title="Nuovo Task" onClose={() => setShowAddTask(false)}>
           <form onSubmit={handleAddTask} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -245,25 +173,6 @@ export default function CompaniesPage() {
           </form>
         </Modal>
       )}
-
-      {editingCompany && (
-        <Modal title="Modifica Azienda" onClose={() => setEditingCompany(null)}>
-          <form onSubmit={handleUpdateCompany} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            <input placeholder="Nome *" value={editingCompany.name} onChange={(e) => setEditingCompany({ ...editingCompany, name: e.target.value })} required autoFocus />
-            <input placeholder="Città" value={editingCompany.city || ""} onChange={(e) => setEditingCompany({ ...editingCompany, city: e.target.value })} />
-            <input placeholder="Telefono" value={editingCompany.phone || ""} onChange={(e) => setEditingCompany({ ...editingCompany, phone: e.target.value })} />
-            <input placeholder="Indirizzo" value={editingCompany.address || ""} onChange={(e) => setEditingCompany({ ...editingCompany, address: e.target.value })} />
-            <select value={editingCompany.type || ""} onChange={(e) => setEditingCompany({ ...editingCompany, type: e.target.value })} style={{ padding: "0.625rem", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border)", borderRadius: "0.5rem", color: editingCompany.type ? "var(--text-primary)" : "var(--text-secondary)", outline: "none" }}>
-              <option value="">Tipologia...</option>
-              {COMPANY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <select value={editingCompany.status || "sconosciuto"} onChange={(e) => setEditingCompany({ ...editingCompany, status: e.target.value })} style={{ padding: "0.625rem", backgroundColor: "var(--bg-tertiary)", border: "1px solid var(--border)", borderRadius: "0.5rem", color: "var(--text-primary)", outline: "none" }}>
-              {COMPANY_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-            <button type="submit" style={{ padding: "0.75rem", backgroundColor: "var(--accent-primary)", color: "#fff", borderRadius: "0.5rem", fontWeight: 600, border: "none", cursor: "pointer", minHeight: "44px" }}>Salva</button>
-          </form>
-        </Modal>
-      )}
     </div>
   );
 }
@@ -274,7 +183,9 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       <div style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "1rem", width: "100%", maxWidth: 420, padding: "1.25rem", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-primary)" }}>{title}</h3>
-          <button onClick={onClose} style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "0.375rem", padding: "0.25rem", color: "var(--text-secondary)", cursor: "pointer", display: "flex" }}><X size={16} /></button>
+          <button onClick={onClose} style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "0.375rem", padding: "0.25rem", color: "var(--text-secondary)", cursor: "pointer", display: "flex" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
         {children}
       </div>

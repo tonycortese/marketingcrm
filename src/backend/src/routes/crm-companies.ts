@@ -4,6 +4,8 @@ import { requireAuth } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
 import { companyModel } from "../lib/company-model.js";
 import { contactModel } from "../lib/contact-model.js";
+import { taskModel } from "../lib/task-model.js";
+import { activityModel } from "../lib/activity-model.js";
 import { emitEntityEvent } from "../lib/realtime.js";
 
 export function createCompaniesRouter(io: SocketIOServer) {
@@ -138,6 +140,26 @@ export function createCompaniesRouter(io: SocketIOServer) {
     try {
       const contacts = await contactModel.findByCompany(Number(req.params.id));
       res.json(contacts);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Tasks by company
+  router.get("/companies/:id/tasks", async (req, res) => {
+    try {
+      const tasks = await taskModel.findByCompany(Number(req.params.id));
+      res.json(tasks);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Activities by company
+  router.get("/companies/:id/activities", async (req, res) => {
+    try {
+      const activities = await activityModel.findByCompany(Number(req.params.id));
+      res.json(activities);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

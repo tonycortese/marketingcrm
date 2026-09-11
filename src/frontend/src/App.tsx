@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./lib/api-context";
 import { SocketProvider } from "./lib/socket-context";
 import Layout from "./components/Layout";
 import CompaniesPage from "./pages/CompaniesPage";
+import CompanyDetailPage from "./pages/CompanyDetailPage";
 import TasksPage from "./pages/TasksPage";
 import DashboardPage from "./pages/DashboardPage";
 import ActivitiesPage from "./pages/ActivitiesPage";
@@ -30,6 +31,7 @@ export default function App() {
                   <Routes>
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/companies" element={<CompaniesPage />} />
+                    <Route path="/companies/:id" element={<CompanyDetailPage />} />
                     <Route path="/activities" element={<ActivitiesPage />} />
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/dashboard" element={<DashboardPage />} />

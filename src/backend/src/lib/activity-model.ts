@@ -16,6 +16,13 @@ export const activityModel = {
     return query(sql, params);
   },
 
+  async findByCompany(companyId: number) {
+    return query(
+      "SELECT * FROM activities WHERE company_id = ? ORDER BY date DESC",
+      [companyId]
+    );
+  },
+
   async findUnique(id: number) {
     const rows = await query(
       `SELECT activities.*, companies.name AS company_name 
