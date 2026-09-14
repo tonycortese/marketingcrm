@@ -4,37 +4,35 @@ import authRoutes from "./auth.js";
 import { createCompaniesRouter } from "./crm-companies.js";
 import { createActivitiesRouter } from "./crm-activities.js";
 import { createTasksRouter } from "./crm-tasks.js";
-import { companyModel } from "../lib/company-model.js";
-import { taskModel } from "../lib/task-model.js";
-import { activityModel } from "../lib/activity-model.js";
-import { contactModel } from "../lib/contact-model.js";
+import { query } from "../lib/db.js";
+import { authLimiter } from "../middleware/rate-limit.js";
 
 export function mountCrmRoutes(app: Router, io: SocketIOServer): void {
   app.get("/health", (_req: Request, res: Response) => res.json({ status: "ok", ts: Date.now() }));
-  app.use("/api/auth", authRoutes);
+  app.use("/api/auth", authLimiter, authRoutes);
   app.use("/api", createCompaniesRouter(io));
   app.use("/api", createActivitiesRouter(io));
   app.use("/api", createTasksRouter(io));
 
-  // Dashboard stats
+  // Dashboard stats — single aggregated query
   app.get("/api/dashboard/stats", async (_req: Request, res: Response) => {
     try {
-      const [companies, tasks, activities, contacts] = await Promise.all([
-        companyModel.findMany(),
-        taskModel.findMany(),
-        activityModel.findMany(),
-        contactModel.findMany(),
-      ]);
-      const openTasks = (tasks as any[]).filter((t) => t.status !== "completed").length;
-      const todayStr = new Date().toISOString().split("T")[0];
-      const todayActivities = (activities as any[]).filter((a) => a.date && a.date >= todayStr).length;
+      const sql = `SELECT
+        (SELECT COUNT(*) FROM companies) AS totalCompanies,
+        (SELECT COUNT(*) FROM contacts) AS totalContacts,
+        (SELECT COUNT(*) FROM tasks) AS totalTasks,
+        (SELECT COUNT(*) FROM tasks WHERE status != 'completed') AS openTasks,
+        (SELECT COUNT(*) FROM activities) AS totalActivities,
+        (SELECT COUNT(*) FROM activities WHERE date >= CURDATE()) AS todayActivities`;
+      const rows = await query(sql);
+      const row = rows[0] as any;
       res.json({
-        totalCompanies: (companies as any[]).length,
-        totalContacts: (contacts as any[]).length,
-        totalTasks: (tasks as any[]).length,
-        openTasks,
-        totalActivities: (activities as any[]).length,
-        todayActivities,
+        totalCompanies: Number(row.totalCompanies),
+        totalContacts: Number(row.totalContacts),
+        totalTasks: Number(row.totalTasks),
+        openTasks: Number(row.openTasks),
+        totalActivities: Number(row.totalActivities),
+        todayActivities: Number(row.todayActivities),
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message });

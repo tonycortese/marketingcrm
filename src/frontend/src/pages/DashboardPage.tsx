@@ -7,9 +7,9 @@ import CompanyFunnel from "../components/CompanyFunnel";
 import ActivityFunnel from "../components/ActivityFunnel";
 
 export default function DashboardPage() {
-  const { companies, refresh: refreshCompanies } = useCompanies();
+  const { items: companies, pagination: companiesPagination, refresh: refreshCompanies } = useCompanies();
   const { refresh: refreshActivities } = useActivities();
-  const { tasks, updateTask, refresh: refreshTasks } = useTasks();
+  const { items: tasks, updateTask, refresh: refreshTasks } = useTasks();
   const navigate = useNavigate();
   const [funnelOpen, setFunnelOpen] = useState(false);
   const [activityFunnelOpen, setActivityFunnelOpen] = useState(false);
@@ -90,7 +90,7 @@ export default function DashboardPage() {
         gap: "1rem",
         marginBottom: "1.5rem",
       }}>
-        <KpiCard label="Aziende" value={companies.length} icon={<Building size={28} />} accent="#3b82f6" />
+        <KpiCard label="Aziende" value={companiesPagination.total} icon={<Building size={28} />} accent="#3b82f6" />
         <KpiCard label="Task Aperti" value={openTasks.length} icon={<CheckCircle2 size={28} />} accent="#10b981" />
       </div>
 

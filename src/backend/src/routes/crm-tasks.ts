@@ -17,9 +17,13 @@ export function createTasksRouter(io: SocketIOServer) {
     company_id: { type: "number" as const },
   };
 
-  router.get("/tasks", async (_req, res) => {
+  // Tasks (paginated)
+  router.get("/tasks", async (req, res) => {
     try {
-      res.json(await taskModel.findMany());
+      const page = req.query.page ? Number(req.query.page) : undefined;
+      const limit = req.query.limit ? Number(req.query.limit) : undefined;
+      const result = await taskModel.findMany(undefined, page || limit ? { page, limit } : undefined);
+      res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

@@ -4,8 +4,8 @@ import { useRealtimeRefresh } from "../lib/socket-context";
 import { CheckCircle2, Circle, Clock, Calendar, Trash2, Plus, X } from "lucide-react";
 
 export default function TasksPage() {
-  const { tasks, loading, addTask, updateTask, deleteTask, refresh: refreshTasks } = useTasks();
-  const { companies } = useCompanies();
+  const { items, pagination, loading, addTask, updateTask, deleteTask, refresh: refreshTasks, setPage } = useTasks();
+  const { items: companies } = useCompanies();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", due_date: "", status: "pending", company_id: null as number | null });
 
@@ -27,9 +27,9 @@ export default function TasksPage() {
     await updateTask(task.id, { status: next });
   };
 
-  const pending = tasks.filter((t: any) => t.status === "pending");
-  const inProgress = tasks.filter((t: any) => t.status === "in_progress");
-  const completed = tasks.filter((t: any) => t.status === "completed");
+  const pending = items.filter((t: any) => t.status === "pending");
+  const inProgress = items.filter((t: any) => t.status === "in_progress");
+  const completed = items.filter((t: any) => t.status === "completed");
 
   const getCompanyName = (id: number | null) => companies.find((c: any) => c.id === id)?.name || "";
 
@@ -44,7 +44,7 @@ export default function TasksPage() {
 
       {loading && <p style={{ color: "var(--text-secondary)" }}>Caricamento...</p>}
 
-      {tasks.length === 0 && !loading && (
+      {items.length === 0 && !loading && (
         <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", backgroundColor: "var(--bg-secondary)", borderRadius: "1rem", border: "1px solid var(--border)" }}>
           <p>Nessun task</p>
         </div>
@@ -80,6 +80,29 @@ export default function TasksPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {completed.map((t: any) => <TaskRow key={t.id} task={t} onToggle={handleToggle} onDelete={deleteTask} companyName={getCompanyName(t.company_id)} />)}
           </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginTop: "1.5rem" }}>
+          <button
+            onClick={() => setPage(pagination.page - 1)}
+            disabled={pagination.page === 1}
+            style={{ padding: "0.5rem 1rem", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "0.5rem", color: "var(--text-primary)", cursor: pagination.page === 1 ? "not-allowed" : "pointer", opacity: pagination.page === 1 ? 0.5 : 1, minHeight: "40px" }}
+          >
+            Precedente
+          </button>
+          <span style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+            Pagina {pagination.page} di {pagination.totalPages} ({pagination.total} totali)
+          </span>
+          <button
+            onClick={() => setPage(pagination.page + 1)}
+            disabled={pagination.page === pagination.totalPages}
+            style={{ padding: "0.5rem 1rem", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "0.5rem", color: "var(--text-primary)", cursor: pagination.page === pagination.totalPages ? "not-allowed" : "pointer", opacity: pagination.page === pagination.totalPages ? 0.5 : 1, minHeight: "40px" }}
+          >
+            Successivo
+          </button>
         </div>
       )}
 

@@ -28,10 +28,13 @@ export function createCompaniesRouter(io: SocketIOServer) {
     company_id: { type: "number" as const },
   };
 
-  // Companies
-  router.get("/companies", async (_req, res) => {
+  // Companies (paginated)
+  router.get("/companies", async (req, res) => {
     try {
-      res.json(await companyModel.findMany());
+      const page = req.query.page ? Number(req.query.page) : undefined;
+      const limit = req.query.limit ? Number(req.query.limit) : undefined;
+      const result = await companyModel.findMany(undefined, page || limit ? { page, limit } : undefined);
+      res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -82,10 +85,13 @@ export function createCompaniesRouter(io: SocketIOServer) {
     }
   });
 
-  // Contacts
-  router.get("/contacts", async (_req, res) => {
+  // Contacts (paginated)
+  router.get("/contacts", async (req, res) => {
     try {
-      res.json(await contactModel.findMany());
+      const page = req.query.page ? Number(req.query.page) : undefined;
+      const limit = req.query.limit ? Number(req.query.limit) : undefined;
+      const result = await contactModel.findMany(undefined, page || limit ? { page, limit } : undefined);
+      res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

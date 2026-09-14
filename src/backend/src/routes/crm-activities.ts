@@ -18,9 +18,13 @@ export function createActivitiesRouter(io: SocketIOServer) {
     task_id: { type: "number" as const },
   };
 
-  router.get("/activities", async (_req, res) => {
+  // Activities (paginated)
+  router.get("/activities", async (req, res) => {
     try {
-      res.json(await activityModel.findMany());
+      const page = req.query.page ? Number(req.query.page) : undefined;
+      const limit = req.query.limit ? Number(req.query.limit) : undefined;
+      const result = await activityModel.findMany(undefined, page || limit ? { page, limit } : undefined);
+      res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

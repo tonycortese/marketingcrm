@@ -11,8 +11,8 @@ const ACTIVITY_TYPES = [
 ];
 
 export default function ActivitiesPage() {
-  const { activities, loading, deleteActivity, updateActivity, refresh: refreshActivities } = useActivities();
-  const { companies } = useCompanies();
+  const { items, pagination, loading, deleteActivity, updateActivity, refresh: refreshActivities, setPage } = useActivities();
+  const { items: companies } = useCompanies();
   const [editingActivity, setEditingActivity] = useState<any>(null);
 
   // Realtime refresh
@@ -42,7 +42,7 @@ export default function ActivitiesPage() {
       {loading && <p style={{ color: "var(--text-secondary)", padding: "1rem" }}>Caricamento...</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        {activities.map((activity: any) => {
+        {items.map((activity: any) => {
           const typeConfig = getTypeConfig(activity.type);
           return (
             <div key={activity.id} style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "1rem", padding: "1rem" }}>
@@ -71,10 +71,33 @@ export default function ActivitiesPage() {
         })}
       </div>
 
-      {activities.length === 0 && !loading && (
+      {items.length === 0 && !loading && (
         <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", backgroundColor: "var(--bg-secondary)", borderRadius: "1rem", border: "1px solid var(--border)" }}>
           <Zap size={40} style={{ margin: "0 auto 0.75rem", opacity: 0.3 }} />
           <p>Nessuna attività trovata</p>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginTop: "1.5rem" }}>
+          <button
+            onClick={() => setPage(pagination.page - 1)}
+            disabled={pagination.page === 1}
+            style={{ padding: "0.5rem 1rem", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "0.5rem", color: "var(--text-primary)", cursor: pagination.page === 1 ? "not-allowed" : "pointer", opacity: pagination.page === 1 ? 0.5 : 1, minHeight: "40px" }}
+          >
+            Precedente
+          </button>
+          <span style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+            Pagina {pagination.page} di {pagination.totalPages} ({pagination.total} totali)
+          </span>
+          <button
+            onClick={() => setPage(pagination.page + 1)}
+            disabled={pagination.page === pagination.totalPages}
+            style={{ padding: "0.5rem 1rem", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "0.5rem", color: "var(--text-primary)", cursor: pagination.page === pagination.totalPages ? "not-allowed" : "pointer", opacity: pagination.page === pagination.totalPages ? 0.5 : 1, minHeight: "40px" }}
+          >
+            Successivo
+          </button>
         </div>
       )}
 

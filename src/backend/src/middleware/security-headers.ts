@@ -13,8 +13,8 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
   if (process.env.NODE_ENV === "production") {
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
-  // CSP — strict, no inline scripts
-  res.setHeader("Content-Security-Policy", "default-src 'self'");
+  // CSP — inline styles allowed (React style={{}} pattern); everything else same-origin
+  res.setHeader("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:");
   // Permissions policy
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   next();

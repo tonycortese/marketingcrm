@@ -1,18 +1,35 @@
 import { query } from "./db.js";
+import type { Pagination, PaginatedResult } from "./company-model.js";
+
+function parsePagination(pagination?: Pagination): { page: number; limit: number; offset: number } {
+  const page = Math.max(1, pagination?.page ?? 1);
+  const limit = Math.min(100, Math.max(1, pagination?.limit ?? 50));
+  const offset = (page - 1) * limit;
+  return { page, limit, offset };
+}
 
 export const contactModel = {
-  async findMany(where?: Record<string, any>) {
+  async findMany(where?: Record<string, any>, pagination?: Pagination): Promise<PaginatedResult<any>> {
+    const params: any[] = [];
     let sql = `SELECT contacts.*, companies.name AS company_name 
                FROM contacts 
                LEFT JOIN companies ON contacts.company_id = companies.id`;
-    const params: any[] = [];
     if (where && Object.keys(where).length) {
       const clauses = Object.keys(where).map((k) => `${k} = ?`);
       sql += ` WHERE ${clauses.join(" AND ")}`;
       params.push(...Object.values(where));
     }
     sql += " ORDER BY contacts.name ASC";
-    return query(sql, params);
+
+    const countSql = sql.replace(/SELECT .* FROM/, "SELECT COUNT(*) AS total FROM");
+    const countRows = await query(countSql, params);
+    const total = Number(countRows[0]?.total ?? 0);
+
+    const { page, limit, offset } = parsePagination(pagination);
+    sql += ` LIMIT ${limit} OFFSET ${offset}`;
+    const data = await query(sql, params);
+
+    return { data, total, page, totalPages: Math.ceil(total / limit) };
   },
 
   async findByCompany(companyId: number) {

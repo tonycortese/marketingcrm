@@ -1,7 +1,12 @@
 import { query } from "./db.js";
 import bcrypt from "bcrypt";
+import { createHash } from "crypto";
 
 const SALT_ROUNDS = 10;
+
+function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
 
 export const userModel = {
   async findByEmail(email: string) {
@@ -32,7 +37,8 @@ export const userModel = {
   },
 
   async assignToken(id: number, token: string) {
-    await query(`UPDATE users SET token = ?, token_expires = DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE id = ?`, [token, id]);
+    const tokenHash = hashToken(token);
+    await query(`UPDATE users SET token = ?, token_expires = DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE id = ?`, [tokenHash, id]);
   },
 
   async clearToken(id: number) {
@@ -40,9 +46,10 @@ export const userModel = {
   },
 
   async findByToken(token: string) {
+    const tokenHash = hashToken(token);
     const rows = await query(
       `SELECT id, name, email, created_at, updated_at FROM users WHERE token = ? AND token_expires > NOW()`,
-      [token]
+      [tokenHash]
     );
     return (rows as any[])[0] ?? null;
   },

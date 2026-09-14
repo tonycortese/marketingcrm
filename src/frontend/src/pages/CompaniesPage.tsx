@@ -18,7 +18,7 @@ const STATUS_COLORS: Record<string, string> = Object.fromEntries(COMPANY_STATUSE
 
 export default function CompaniesPage() {
   const navigate = useNavigate();
-  const { companies, loading, deleteCompany, refresh: refreshCompanies } = useCompanies();
+  const { items, pagination, loading, deleteCompany, refresh: refreshCompanies, setPage } = useCompanies();
   const { addTask, refresh: refreshTasks } = useTasks();
   const { addContact, refresh: refreshContacts } = useContacts();
   const [contactForm, setContactForm] = useState({ name: "", phone: "", email: "" });
@@ -37,15 +37,15 @@ export default function CompaniesPage() {
   useRealtimeRefresh("contact:created", refreshContacts);
 
   const filteredCompanies = useMemo(() => {
-    if (!searchQuery) return companies;
+    if (!searchQuery) return items;
     const q = searchQuery.toLowerCase();
-    return companies.filter(c =>
+    return items.filter((c: any) =>
       c.name?.toLowerCase().includes(q) ||
       c.city?.toLowerCase().includes(q) ||
       c.type?.toLowerCase().includes(q) ||
       c.status?.toLowerCase().includes(q)
     );
-  }, [companies, searchQuery]);
+  }, [items, searchQuery]);
 
   const handleAddContact = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,6 +142,29 @@ export default function CompaniesPage() {
         <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", backgroundColor: "var(--bg-secondary)", borderRadius: "1rem", border: "1px solid var(--border)" }}>
           <Building size={40} style={{ margin: "0 auto 0.75rem", opacity: 0.3 }} />
           <p>Nessuna azienda trovata</p>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginTop: "1.5rem" }}>
+          <button
+            onClick={() => setPage(pagination.page - 1)}
+            disabled={pagination.page === 1}
+            style={{ padding: "0.5rem 1rem", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "0.5rem", color: "var(--text-primary)", cursor: pagination.page === 1 ? "not-allowed" : "pointer", opacity: pagination.page === 1 ? 0.5 : 1, minHeight: "40px" }}
+          >
+            Precedente
+          </button>
+          <span style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+            Pagina {pagination.page} di {pagination.totalPages} ({pagination.total} totali)
+          </span>
+          <button
+            onClick={() => setPage(pagination.page + 1)}
+            disabled={pagination.page === pagination.totalPages}
+            style={{ padding: "0.5rem 1rem", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "0.5rem", color: "var(--text-primary)", cursor: pagination.page === pagination.totalPages ? "not-allowed" : "pointer", opacity: pagination.page === pagination.totalPages ? 0.5 : 1, minHeight: "40px" }}
+          >
+            Successivo
+          </button>
         </div>
       )}
 
